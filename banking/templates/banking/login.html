@@ -1,0 +1,240 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SmartBank Enterprise</title>
+    <link rel="stylesheet" href="{% static 'banking/styles.css' %}">
+</head>
+<body class="auth-page">
+
+    <div class="glass-container auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <div class="brand-icon">S</div>
+            </div>
+            <h2 class="auth-title">SmartBank Enterprise</h2>
+            <p class="auth-subtitle">Secure Digital Banking Gateway</p>
+        </div>
+
+        <div class="auth-tabs">
+            <div class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">Sign In</div>
+            <div class="auth-tab" id="tab-register-btn" onclick="switchAuthTab('register')">Register</div>
+        </div>
+
+        <!-- Alert messages container -->
+        <div class="error-alert-box" id="auth-alert"></div>
+
+        <!-- 1. LOGIN FORM -->
+        <div class="auth-form-panel active" id="panel-login">
+            <form id="form-login" onsubmit="handleLoginSubmit(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label" for="login-username">Username</label>
+                    <input class="form-control" type="text" id="login-username" required placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="login-password">Password</label>
+                    <input class="form-control" type="password" id="login-password" required placeholder="Enter password">
+                </div>
+                <button class="btn btn-primary" type="submit" id="login-submit-btn">
+                    <span>Sign In to Account</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- 2. REGISTRATION FORM -->
+        <div class="auth-form-panel" id="panel-register">
+            <form id="form-register" onsubmit="handleRegisterSubmit(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label" for="reg-username">Username *</label>
+                    <input class="form-control" type="text" id="reg-username" required placeholder="Pick a username">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="reg-email">Email Address *</label>
+                        <input class="form-control" type="email" id="reg-email" required placeholder="name@domain.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-password">Password *</label>
+                        <input class="form-control" type="password" id="reg-password" required placeholder="At least 8 characters">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="reg-phone">Phone Number</label>
+                        <input class="form-control" type="text" id="reg-phone" placeholder="e.g., 555-0199">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-national-id">National ID / SSN *</label>
+                        <input class="form-control" type="text" id="reg-national-id" required placeholder="Unique ID number">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="reg-address">Residential Address</label>
+                    <input class="form-control" type="text" id="reg-address" placeholder="123 Financial St, City">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="reg-income">Monthly Income ($) *</label>
+                        <input class="form-control" type="number" id="reg-income" step="0.01" required min="0" placeholder="e.g., 5000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-employment">Employment Status *</label>
+                        <select class="form-control" id="reg-employment" required>
+                            <option value="Employed">Employed</option>
+                            <option value="Self-Employed">Self-Employed</option>
+                            <option value="Unemployed">Unemployed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" type="submit" id="register-submit-btn">
+                    <span>Create Free Account</span>
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        function switchAuthTab(type) {
+            const loginBtn = document.getElementById('tab-login-btn');
+            const registerBtn = document.getElementById('tab-register-btn');
+            const loginPanel = document.getElementById('panel-login');
+            const registerPanel = document.getElementById('panel-register');
+            const alertBox = document.getElementById('auth-alert');
+
+            alertBox.style.display = 'none';
+
+            if (type === 'login') {
+                loginBtn.classList.add('active');
+                registerBtn.classList.remove('active');
+                loginPanel.classList.add('active');
+                registerPanel.classList.remove('active');
+            } else {
+                loginBtn.classList.remove('active');
+                registerBtn.classList.add('active');
+                loginPanel.classList.remove('active');
+                registerPanel.classList.add('active');
+            }
+        }
+
+        function showAlert(message) {
+            const alertBox = document.getElementById('auth-alert');
+            alertBox.textContent = message;
+            alertBox.style.display = 'block';
+        }
+
+        async function handleLoginSubmit(event) {
+            event.preventDefault();
+            const alertBox = document.getElementById('auth-alert');
+            alertBox.style.display = 'none';
+
+            const usernameInput = document.getElementById('login-username').value;
+            const passwordInput = document.getElementById('login-password').value;
+            const submitBtn = document.getElementById('login-submit-btn');
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="loading-spinner"></div>';
+
+            try {
+                const response = await fetch('/api/auth/login/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        username: usernameInput,
+                        password: passwordInput
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = '/dashboard/';
+                } else {
+                    showAlert(data.error || 'Authentication failed. Please check credentials.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>Sign In to Account</span>';
+                }
+            } catch (error) {
+                showAlert('Server connection error. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Sign In to Account</span>';
+            }
+        }
+
+        async function handleRegisterSubmit(event) {
+            event.preventDefault();
+            const alertBox = document.getElementById('auth-alert');
+            alertBox.style.display = 'none';
+
+            const submitBtn = document.getElementById('register-submit-btn');
+            
+            const username = document.getElementById('reg-username').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const phone_number = document.getElementById('reg-phone').value;
+            const national_id = document.getElementById('reg-national-id').value;
+            const address = document.getElementById('reg-address').value;
+            const monthly_income = document.getElementById('reg-income').value;
+            const employment_status = document.getElementById('reg-employment').value;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="loading-spinner"></div>';
+
+            try {
+                const response = await fetch('/api/auth/register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        username, email, password, phone_number,
+                        national_id, address, monthly_income, employment_status
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    window.location.href = '/dashboard/';
+                } else {
+                    showAlert(data.error || 'Registration failed. Check your input values.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>Create Free Account</span>';
+                }
+            } catch (error) {
+                showAlert('Connection error. Could not register user.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Create Free Account</span>';
+            }
+        }
+
+        // Helper to retrieve CSRF token cookie value
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

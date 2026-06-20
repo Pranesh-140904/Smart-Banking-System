@@ -1,0 +1,518 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SmartBank Enterprise</title>
+    <link rel="stylesheet" href="{% static 'banking/styles.css' %}">
+    <!-- ChartJS CDN for balance charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <div class="app-layout">
+        <!-- 1. SIDEBAR NAVIGATION -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">S</div>
+                <span class="brand-name">SmartBank</span>
+            </div>
+
+            <nav class="nav-menu">
+                <a class="nav-item active" id="nav-overview" onclick="switchTab('overview')">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+                    <span>Overview</span>
+                </a>
+                <a class="nav-item" id="nav-transfer" onclick="switchTab('transfer')">
+                    <svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20h5v5M21 3L14 10M3 21l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Transfer Money</span>
+                </a>
+                <a class="nav-item" id="nav-loans" onclick="switchTab('loans')">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 14V10M12 10a2 2 0 100-4 2 2 0 000 4zm0 4a2 2 0 100 4 2 2 0 000-4z" stroke-width="2"/></svg>
+                    <span>Loans & Credit</span>
+                </a>
+                <a class="nav-item" id="nav-security" onclick="switchTab('security')">
+                    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Security & Alerts</span>
+                </a>
+                <a class="nav-item" id="nav-notifications" onclick="switchTab('notifications')">
+                    <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Inbox Alerts <span class="badge badge-success" id="notif-count-badge" style="display:none; padding: 0.1rem 0.3rem; margin-left: 0.25rem;">0</span></span>
+                </a>
+                <a class="nav-item" id="nav-settings" onclick="switchTab('settings')">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke-width="2"/></svg>
+                    <span>My Profile</span>
+                </a>
+            </nav>
+
+            <div class="user-badge">
+                <div class="user-avatar" id="sidebar-avatar">U</div>
+                <div class="user-info">
+                    <span class="username" id="sidebar-username">Loading...</span>
+                    <span class="user-role">Premium Member</span>
+                </div>
+            </div>
+            
+            <a href="#" class="logout-btn" onclick="handleLogout(event)">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                <span>Logout</span>
+            </a>
+        </aside>
+
+        <!-- 2. MAIN DASHBOARD REGION -->
+        <main class="main-content">
+            <header class="header-bar">
+                <div>
+                    <h1 class="page-title" id="page-display-title">Dashboard Overview</h1>
+                </div>
+                <div class="date-badge" id="system-time-badge">
+                    Saturday, Jun 20, 2026
+                </div>
+            </header>
+
+            <!-- ==========================================================
+                 TAB 1: OVERVIEW & ACCOUNTS
+                 ========================================================== -->
+            <section class="tab-panel active" id="panel-overview">
+                <!-- User account balances -->
+                <div class="accounts-section">
+                    <div class="section-header">
+                        <h2 class="section-title">My Banking Accounts</h2>
+                        <button class="action-link-btn" onclick="openNewAccountModal()">+ Open Account</button>
+                    </div>
+                    <div class="accounts-list" id="accounts-container">
+                        <!-- Dynamic Account Cards Rendered by JS -->
+                        <div style="grid-column: 1/-1; padding: 2rem; text-align: center; color: var(--text-muted);">
+                            Retrieving bank accounts...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Grid: Analytics & Mini Widgets -->
+                <div class="dashboard-grid">
+                    <!-- Historical transaction chart -->
+                    <div class="glass-container widget-card">
+                        <div class="section-header">
+                            <h2 class="section-title">Income & Expenses Trend</h2>
+                        </div>
+                        <div style="position: relative; height: 260px; width: 100%;">
+                            <canvas id="balanceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Quick Money Transfer Form Widget -->
+                    <div class="glass-container widget-card">
+                        <div class="section-header">
+                            <h2 class="section-title">Quick Transfer</h2>
+                        </div>
+                        <form class="quick-transfer-widget" id="quick-transfer-form" onsubmit="handleQuickTransfer(event)">
+                            <div class="form-group" style="margin-bottom:0.75rem;">
+                                <label class="form-label" for="quick-sender">From Account</label>
+                                <select class="form-control" id="quick-sender" required>
+                                    <option value="">Select source account</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0.75rem;">
+                                <label class="form-label" for="quick-recipient">To Account Number</label>
+                                <input class="form-control" type="text" id="quick-recipient" required placeholder="Enter 10-digit number" oninput="debounceLookup(this.value, 'quick-lookup')">
+                                <div class="lookup-info-box" id="quick-lookup"></div>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0.75rem;">
+                                <label class="form-label" for="quick-amount">Transfer Amount ($)</label>
+                                <input class="form-control" type="number" id="quick-amount" step="0.01" min="0.01" required placeholder="0.00">
+                            </div>
+                            <button class="btn btn-primary" type="submit" id="quick-transfer-submit">
+                                Send Transfer
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions History table -->
+                <div class="glass-container table-container" style="margin-top:2rem;">
+                    <div class="section-header">
+                        <h2 class="section-title">Recent Transactions</h2>
+                        <button class="action-link-btn" onclick="switchTab('transfer')">View Statement Ledger</button>
+                    </div>
+                    <table class="banking-table">
+                        <thead>
+                            <tr>
+                                <th>Ref Number</th>
+                                <th>Date & Time</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-transactions-body">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                    Fetching historical statement logs...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+
+            <!-- ==========================================================
+                 TAB 2: FULL FUNDS TRANSFER & LEDGER AUDIT
+                 ========================================================== -->
+            <section class="tab-panel" id="panel-transfer">
+                <div class="dashboard-grid" style="grid-template-columns: 1.1fr 1.9fr;">
+                    <!-- Transfer Entry Form -->
+                    <div class="glass-container widget-card" style="height: fit-content;">
+                        <div class="section-header">
+                            <h2 class="section-title">Initiate Fund Transfer</h2>
+                        </div>
+                        <div class="error-alert-box" id="transfer-alert" style="margin-bottom: 1.25rem;"></div>
+                        <form id="full-transfer-form" onsubmit="handleFullTransfer(event)">
+                            <div class="form-group">
+                                <label class="form-label" for="full-sender">Source Account</label>
+                                <select class="form-control" id="full-sender" required>
+                                    <option value="">Select source account</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="full-recipient">Recipient Account Number</label>
+                                <input class="form-control" type="text" id="full-recipient" required placeholder="Enter 10-digit account number" oninput="debounceLookup(this.value, 'full-lookup')">
+                                <div class="lookup-info-box" id="full-lookup"></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="full-amount">Transfer Amount ($)</label>
+                                <input class="form-control" type="number" id="full-amount" step="0.01" min="0.01" required placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="full-desc">Memo / Description</label>
+                                <input class="form-control" type="text" id="full-desc" placeholder="e.g. Rent, Groceries, Gift">
+                            </div>
+                            <button class="btn btn-primary" type="submit" id="full-transfer-submit">
+                                Execute Transaction
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Statement Ledger Audits -->
+                    <div class="glass-container table-container">
+                        <div class="section-header">
+                            <h2 class="section-title">Audit Ledger & Statements</h2>
+                            <button class="btn btn-secondary" onclick="exportTransactions()" style="width: auto; padding: 0.4rem 1rem; font-size: 0.8rem; height: auto;">
+                                Export CSV
+                            </button>
+                        </div>
+
+                        <!-- Statement filter system -->
+                        <div class="table-filters">
+                            <div class="table-search">
+                                <input class="form-control table-filter-input" type="text" id="filter-search" placeholder="Search reference, description..." oninput="filterTransactions()">
+                            </div>
+                            <select class="table-filter-input" id="filter-account" onchange="filterTransactions()">
+                                <option value="">All Accounts</option>
+                            </select>
+                            <select class="table-filter-input" id="filter-type" onchange="filterTransactions()">
+                                <option value="">All Types</option>
+                                <option value="Transfer">Transfers</option>
+                                <option value="Deposit">Deposits</option>
+                                <option value="Withdrawal">Withdrawals</option>
+                            </select>
+                            <select class="table-filter-input" id="filter-status" onchange="filterTransactions()">
+                                <option value="">All Statuses</option>
+                                <option value="Success">Success</option>
+                                <option value="Flagged">Flagged</option>
+                                <option value="Failed">Failed</option>
+                            </select>
+                        </div>
+
+                        <div style="overflow-x: auto;">
+                            <table class="banking-table">
+                                <thead>
+                                    <tr>
+                                        <th>Ref Number</th>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Details</th>
+                                        <th>Status</th>
+                                        <th style="text-align: right;">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="full-transactions-body">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; padding: 2rem;">Loading account transactions...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ==========================================================
+                 TAB 3: LOAN ELIGIBILITY ENGINE
+                 ========================================================== -->
+            <section class="tab-panel" id="panel-loans">
+                <div class="loan-predictor-grid">
+                    <!-- Form application inputs -->
+                    <div class="glass-container widget-card">
+                        <div class="section-header">
+                            <h2 class="section-title">Apply for Credit / Loan</h2>
+                        </div>
+                        <div class="error-alert-box" id="loan-alert" style="margin-bottom: 1.25rem;"></div>
+                        
+                        <form id="loan-predict-form" onsubmit="handleLoanPredict(event)">
+                            <div class="form-group">
+                                <label class="form-label" for="loan-amount">Requested Loan Principal ($)</label>
+                                <input class="form-control" type="number" id="loan-amount" step="1" min="100" required placeholder="e.g. 10000">
+                            </div>
+                            
+                            <!-- Hidden or autofilled values from profile -->
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="loan-income">Monthly Income ($) <span style="font-size:0.75rem; color:var(--text-muted);">(from profile)</span></label>
+                                    <input class="form-control" type="number" id="loan-income" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="loan-credit">Credit Score <span style="font-size:0.75rem; color:var(--text-muted);">(from profile)</span></label>
+                                    <input class="form-control" type="number" id="loan-credit" readonly>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="loan-employment">Employment Status</label>
+                                    <input class="form-control" type="text" id="loan-employment" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="loan-debt">Existing Monthly Debts ($)</label>
+                                    <input class="form-control" type="number" id="loan-debt" step="0.01" min="0" default="0" placeholder="e.g., 200">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="loan-disburse-account">Disbursement Target Account</label>
+                                <select class="form-control" id="loan-disburse-account" required>
+                                    <option value="">Select checking account for funds</option>
+                                </select>
+                            </div>
+
+                            <div class="form-row" style="margin-top: 1.5rem;">
+                                <button class="btn btn-secondary" type="button" onclick="runLoanRiskAnalysis()">
+                                    Analyze Risk Odds
+                                </button>
+                                <button class="btn btn-primary" type="submit" id="loan-apply-submit">
+                                    Submit Application
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Risk Odds Gauge & Factor breakdown -->
+                    <div class="glass-container widget-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <h2 class="section-title" style="margin-bottom: 1.5rem;">Automated Credit Decision Engine</h2>
+                        
+                        <div class="predict-gauge-box">
+                            <div class="gauge-canvas-container">
+                                <!-- Conic gradient representing credit probability gauge -->
+                                <div class="radial-gauge" id="loan-gauge">
+                                    <div class="gauge-inner-text">
+                                        <span class="gauge-score" id="gauge-score-value">0%</span>
+                                        <span class="gauge-label">Approval Odds</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h3 class="section-title" id="decision-outcome-text" style="font-size: 1.15rem; margin-top: 1.5rem; color: var(--text-muted);">
+                                Run analysis to inspect decision
+                            </h3>
+                            <p class="auth-subtitle" id="decision-recommendation-text" style="margin-top: 0.5rem; max-width: 320px;">
+                                Input your loan amount and click "Analyze Risk Odds" to check eligibility before submission.
+                            </p>
+                        </div>
+
+                        <!-- Positive and Negative checklist -->
+                        <div style="width: 100%; max-width: 380px; margin-top: 1rem; border-top: 1px solid var(--card-border); padding-top: 1rem;">
+                            <h4 class="form-label" style="text-transform: uppercase; font-size:0.75rem; letter-spacing:0.05em; margin-bottom: 0.75rem;">Analysis Checklist</h4>
+                            <div class="factors-list" id="checklist-container">
+                                <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">No analysis run yet</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ==========================================================
+                 TAB 4: SECURITY & FRAUD SCENARIOS
+                 ========================================================== -->
+            <section class="tab-panel" id="panel-security">
+                <div class="dashboard-grid">
+                    <!-- Log of active alerts -->
+                    <div class="glass-container widget-card">
+                        <div class="section-header">
+                            <h2 class="section-title">Active Security Audits</h2>
+                        </div>
+                        <div id="fraud-alerts-container" style="display:flex; flex-direction:column; gap:1rem;">
+                            <div style="text-align: center; color: var(--text-muted); padding: 2rem;">No historical alerts log.</div>
+                        </div>
+                    </div>
+
+                    <!-- Fraud Simulator Controls -->
+                    <div class="glass-container widget-card" style="height: fit-content;">
+                        <div class="section-header">
+                            <h2 class="section-title">Fraud Prevention Testing</h2>
+                        </div>
+                        <p class="auth-subtitle" style="margin-bottom: 1.5rem;">
+                            Test the banking application's automated defenses by triggering simulated fraud rules.
+                        </p>
+                        
+                        <div class="factors-list" style="gap: 1.5rem;">
+                            <!-- Simulator 1: Velocity Check -->
+                            <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--card-border); padding: 1rem; border-radius: var(--radius-md);">
+                                <h4 class="notif-title" style="margin-bottom:0.25rem;">1. High Frequency Velocity Lockout</h4>
+                                <p style="font-size: 0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                                    Submitting more than 3 transfers within 60 seconds automatically triggers a High severity lock, blocking the transaction and **suspending the sender's bank account**.
+                                </p>
+                                <button class="btn btn-secondary" onclick="simulateVelocityFraud()" style="width: auto; padding: 0.4rem 1rem; font-size: 0.8rem; height: auto;">
+                                    Trigger Velocity Check
+                                </button>
+                            </div>
+
+                            <!-- Simulator 2: Threshold limits -->
+                            <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--card-border); padding: 1rem; border-radius: var(--radius-md);">
+                                <h4 class="notif-title" style="margin-bottom:0.25rem;">2. Single Transfer Limits</h4>
+                                <p style="font-size: 0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                                    Any single transaction exceeding **$10,000** triggers a Medium severity auditing flag. The transaction completes but creates an active investigation case.
+                                </p>
+                                <button class="btn btn-secondary" onclick="simulateLimitFraud()" style="width: auto; padding: 0.4rem 1rem; font-size: 0.8rem; height: auto;">
+                                    Trigger Limit Check
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ==========================================================
+                 TAB 5: NOTIFICATIONS INBOX (SMS/EMAIL LOGS)
+                 ========================================================== -->
+            <section class="tab-panel" id="panel-notifications">
+                <div class="glass-container widget-card" style="max-width: 780px; margin: 0 auto;">
+                    <div class="section-header">
+                        <h2 class="section-title">Alert Notification Log</h2>
+                        <span class="date-badge" id="inbox-alert-count">0 messages</span>
+                    </div>
+                    <div class="notif-inbox" id="notifications-container">
+                        <div style="text-align: center; color: var(--text-muted); padding: 3rem;">
+                            No incoming email or SMS alerts found.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ==========================================================
+                 TAB 6: PROFILE & FINANCIAL CONTROLS (SETTINGS)
+                 ========================================================== -->
+            <section class="tab-panel" id="panel-settings">
+                <div class="glass-container widget-card" style="max-width: 640px; margin: 0 auto;">
+                    <div class="section-header">
+                        <h2 class="section-title">My User Profile Settings</h2>
+                    </div>
+                    <div class="error-alert-box" id="settings-alert" style="margin-bottom: 1.25rem;"></div>
+                    
+                    <form id="profile-settings-form" onsubmit="handleProfileUpdate(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="set-username">Username <span style="font-size:0.75rem; color:var(--text-muted);">(readonly)</span></label>
+                                <input class="form-control" type="text" id="set-username" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="set-email">Email <span style="font-size:0.75rem; color:var(--text-muted);">(readonly)</span></label>
+                                <input class="form-control" type="text" id="set-email" readonly>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="set-phone">Phone Number</label>
+                                <input class="form-control" type="text" id="set-phone" placeholder="e.g. 555-0199">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="set-national-id">National ID / SSN <span style="font-size:0.75rem; color:var(--text-muted);">(readonly)</span></label>
+                                <input class="form-control" type="text" id="set-national-id" readonly>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="set-address">Residential Address</label>
+                            <input class="form-control" type="text" id="set-address" placeholder="123 Financial St, City">
+                        </div>
+
+                        <!-- Interactive factors allowing real-time Credit/ML parameter tuning! -->
+                        <div style="border-top: 1px solid var(--card-border); margin: 1.5rem 0; padding-top: 1.5rem;">
+                            <h4 class="form-label" style="text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; margin-bottom: 1rem; color: var(--accent-blue);">
+                                Risk Profile & Decision Variables
+                            </h4>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="set-income">Monthly income ($)</label>
+                                    <input class="form-control" type="number" id="set-income" required min="0" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="set-employment">Employment Status</label>
+                                    <select class="form-control" id="set-employment" required>
+                                        <option value="Employed">Employed</option>
+                                        <option value="Self-Employed">Self-Employed</option>
+                                        <option value="Unemployed">Unemployed</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="set-credit">Credit Score <span style="font-size:0.75rem; color:var(--text-muted);">(Adjust value to test ML model response)</span></label>
+                                <input class="form-control" type="number" id="set-credit" required min="300" max="850">
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" type="submit" id="settings-submit-btn">
+                            Save Configuration Changes
+                        </button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ==========================================================
+         OPEN ACCOUNT MODAL POPUP
+         ========================================================== -->
+    <div style="display:none; position:fixed; z-index:100; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); align-items:center; justify-content:center;" id="new-account-modal">
+        <div class="glass-container widget-card" style="width:100%; max-width:400px; padding: 2rem;">
+            <div class="section-header" style="margin-bottom: 1.5rem;">
+                <h2 class="section-title">Open New Account</h2>
+                <button class="action-link-btn" onclick="closeNewAccountModal()" style="font-size:1.25rem;">&times;</button>
+            </div>
+            <form id="new-account-form" onsubmit="handleCreateAccount(event)">
+                <div class="form-group">
+                    <label class="form-label" for="new-acc-type">Account Type</label>
+                    <select class="form-control" id="new-acc-type" required>
+                        <option value="Savings">Savings Account (Starts with $500 bonus)</option>
+                        <option value="Checking">Checking Account (Starts with $0.00)</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" type="submit">
+                    Provision Account
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Load Client script -->
+    <script src="{% static 'banking/app.js' %}"></script>
+</body>
+</html>
